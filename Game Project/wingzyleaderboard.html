@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wingzy Leaderboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: url('sky.webp') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Arial', sans-serif;
+      color: white;
+      text-align: center;
+
+      /* Flexbox for centering */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 7vw;
+      text-shadow: 2px 2px 4px #000;
+      margin-bottom: 20px;
+    }
+
+    .leaderboard {
+      max-width: 90%;
+      width: 400px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 20px;
+      border-radius: 15px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      font-size: 4.5vw;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+    }
+
+    th {
+      text-decoration: underline;
+    }
+
+    #backBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 4.5vw;
+      max-width: 250px;
+      width: 80%;
+      background-color: #007BFF;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      box-shadow: 2px 2px 5px black;
+    }
+
+    #backBtn:hover {
+      background-color: #0056b3;
+    }
+
+    /* Desktop styles */
+    @media (min-width: 768px) {
+      h1 {
+        font-size: 48px;
+      }
+
+      table {
+        font-size: 20px;
+      }
+
+      #backBtn {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Leaderboard</h1>
+
+  <div class="leaderboard">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody id="scoreTable">
+        <!-- Top 5 scores will appear here -->
+      </tbody>
+    </table>
+  </div>
+
+  <button id="backBtn" onclick="goBack()">Back</button>
+
+  <script>
+    function goBack() {
+      window.location.href = "wingzy.html";
+    }
+
+    // Get data from localStorage
+    let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+
+    // Sort scores from high to low and keep top 5
+    leaderboard.sort((a, b) => b.score - a.score);
+    let topFive = leaderboard.slice(0, 5);
+
+    // Display in table
+    const table = document.getElementById("scoreTable");
+    topFive.forEach(player => {
+      let row = `<tr><td>${player.name}</td><td>${player.score}</td></tr>`;
+      table.innerHTML += row;
+    });
+  </script>
+</body>
+</html>

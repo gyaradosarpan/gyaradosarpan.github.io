@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wingzy Home</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Arial', sans-serif;
+
+      
+    }
+
+    .background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    .background img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .logo {
+      width: 60%;
+      max-width: 300px;
+      margin-bottom: 30px;
+    }
+
+    .btn {
+      padding: 14px 30px;
+      margin: 12px;
+      font-size: 1.8rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(to right, #ffcc00, #ff9900);
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s ease-in-out;
+      width: 80%;
+      max-width: 320px;
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+      background: linear-gradient(to right, #ff9900, #ff6600);
+    }
+
+    /* Responsive adjustments for mobile */
+    @media (max-width: 480px) {
+      .logo {
+        width: 80%;
+      }
+
+      .btn {
+        font-size: 2.2rem;
+        padding: 16px 32px;
+        max-width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="background">
+    <img src="sky.webp" alt="Sky Background">
+  </div>
+
+  <div class="container">
+    <img src="wingzy logo.png" alt="wingzy Logo" class="logo">
+    <button class="btn" onclick="startGame()">Start</button>
+    <button class="btn" onclick="goToLeaderboard()">Leaderboard</button>
+  </div>
+
+  <script>
+    function startGame() {
+      window.location.href = "wingzy.html";
+    }
+
+    function goToLeaderboard() {
+      window.location.href = "wingzyleaderboard.html";
+    }
+  </script>
+
+</body>
+</html>

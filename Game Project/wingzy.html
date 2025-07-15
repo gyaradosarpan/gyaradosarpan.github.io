@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wingzy Game</title>
+  <style>
+@font-face {
+  font-family: 'PressStart2P';
+  src: url('PressStart2P-Regular.ttf') format('truetype');
+}
+
+html, body {
+  margin: 0;
+  overflow: hidden;
+  font-family: 'Arial', sans-serif;
+  height: 100%;
+  width: 100%;
+}
+
+canvas {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+video.bgVideo {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 100vw;
+  min-height: 100vh;
+  object-fit: cover;
+  z-index: -2;
+  display: none;
+}
+
+#welcomeScreen,
+#gameOverScreen {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 20px;
+  border-radius: 15px;
+  text-align: center;
+  color: white;
+  z-index: 2;
+  width: 80%; /* reduced width for mobile */
+  max-width: 320px;
+  font-size: 5vw; /* larger font on mobile */
+}
+
+#welcomeScreen h2,
+#gameOverScreen h2 {
+  margin-bottom: 10px;
+  font-size: 6vw;
+}
+
+#welcomeScreen p {
+  margin-bottom: 20px;
+  font-size: 4.5vw;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 4.5vw;
+  background: linear-gradient(to right, #28a745, #218838);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.3s;
+  margin: 5px;
+  width: 80%;
+  max-width: 280px;
+}
+
+button:hover {
+  transform: scale(1.05);
+  background: linear-gradient(to right, #218838, #1e7e34);
+}
+
+#finalScore {
+  margin-top: 15px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px;
+  border-radius: 12px;
+  font-size: 5vw;
+}
+
+#nameInput {
+  padding: 10px;
+  font-size: 5vw; /* increased */
+  border-radius: 8px;
+  border: none;
+  width: 80%; /* reduced */
+  max-width: 220px;
+  margin-bottom: 15px;
+  caret-color: red;
+  background: #fff;
+  color: #000;
+}
+
+#nameInput.disabled {
+  background: #fff;
+  color: #000;
+}
+
+/* Tablet/Desktop Enhancements */
+@media (min-width: 768px) {
+  #welcomeScreen,
+  #gameOverScreen {
+    width: 50%;
+    max-width: 500px;
+    padding: 30px;
+    font-size: 18px;
+  }
+
+  #welcomeScreen h2,
+  #gameOverScreen h2 {
+    font-size: 24px;
+  }
+
+  #welcomeScreen p {
+    font-size: 18px;
+  }
+
+  button {
+    font-size: 16px;
+    max-width: 200px;
+    margin: 10px auto;
+  }
+
+  #finalScore {
+    font-size: 20px;
+    padding: 15px;
+  }
+
+  #nameInput {
+    font-size: 16px;
+    max-width: 250px;
+  }
+}
+
+    
+  
+  </style>
+</head>
+<body>
+  <video id="video1" class="bgVideo" autoplay muted>
+  <source src="sky_gif_upgraded.mp4" type="video/mp4">
+</video>
+<video id="videoBetween" class="bgVideo" autoplay muted style="display: none;">
+  <source src="sunny to rain final.mp4" type="video/mp4">
+</video>
+<video id="video2" class="bgVideo" autoplay muted style="display: none;">
+  <source src="rain_gif_upgraded.mp4" type="video/mp4">
+</video>
+<video id="videoEnd" class="bgVideo" autoplay muted style="display: none;">
+  <source src="rain to sunny final.mp4" type="video/mp4">
+</video>
+
+
+  <div id="welcomeScreen">
+    <h2>Welcome to Flappy Bird</h2>
+    <input type="text" id="nameInput" placeholder="Enter your name" autocomplete="off">
+    <p>Press Spacebar or Left Click to fly and avoid the pipes!</p>
+    <button id="continueButton" disabled>Continue</button>
+    <button onclick="exitToHome()">Exit</button>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="gameOverScreen" style="display:none;">
+    <img src="gameover.png" alt="Game Over" width="300">
+    <h2 id="finalScore"></h2>
+    <button id="continueBtn">Continue</button>
+    <button onclick="exitGame()">Exit</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const welcomeScreen = document.getElementById("welcomeScreen");
+    const gameOverScreen = document.getElementById("gameOverScreen");
+    const finalScoreText = document.getElementById("finalScore");
+    const continueBtn = document.getElementById("continueBtn");
+    const nameInput = document.getElementById("nameInput");
+    const continueButton = document.getElementById("continueButton");
+
+    const birdImage = new Image();
+    birdImage.src = 'bird_cropped.png';
+
+    const crashBirdImage = new Image();
+    crashBirdImage.src = 'bird hit_trimmed.png';
+
+    const bottomPipeImage = new Image();
+    bottomPipeImage.src = 'pipe_cropped.png';
+
+    const topPipeImage = new Image();
+    topPipeImage.src = 'pipe_cropped.png';
+
+    const popSound = new Audio('pop last main.mp3');
+    const crashSound = new Audio('crash last main.mp3');
+    popSound.preload = "auto";
+    crashSound.preload = "auto";
+
+    let backgroundX = 0;
+    let bird, pipes, score, pipeCount, gameOver, gameStarted = false;
+    let playerName = "";
+    let waitingToStart = false;
+    let showCrashedBird = false;
+    let crashFreeze = false;
+    let animationId = null;
+
+    function startGame() {
+      welcomeScreen.style.display = "none";
+      gameStarted = true;
+      resetGame();
+    }
+
+    function exitToHome() {
+      window.location.href = "wingzyhome.html";
+    }
+
+    function exitGame() {
+      saveScore();
+      window.location.href = "wingzyhome.html";
+    }
+
+    continueBtn.addEventListener("click", resetGame);
+
+    document.addEventListener("keydown", (e) => {
+      if (waitingToStart && !gameStarted) {
+        waitingToStart = false;
+        const msg = document.getElementById("pressAnyKeyMsg");
+        if (msg) msg.remove();
+        startGame();
+      } else if (e.code === "Space" && gameStarted && !gameOver && !crashFreeze) {
+        bird.velocity = -8;
+      }
+    });
+
+    document.addEventListener("click", () => {
+      if (gameStarted && !gameOver && !crashFreeze) bird.velocity = -8;
+    });
+
+    document.addEventListener("touchstart", () => {
+      if (waitingToStart && !gameStarted) {
+        waitingToStart = false;
+        const msg = document.getElementById("pressAnyKeyMsg");
+        if (msg) msg.remove();
+        startGame();
+      } else if (gameStarted && !gameOver && !crashFreeze) {
+        bird.velocity = -8;
+      }
+    });
+
+    function saveScore() {
+      let scores = JSON.parse(localStorage.getItem("leaderboard")) || [];
+      scores.push({ name: playerName, score: score });
+      localStorage.setItem("leaderboard", JSON.stringify(scores));
+    }
+
+    function spawnPipe() {
+      if (!gameStarted || gameOver) return;
+      let gap = 250;
+      let margin = 150;
+      let maxTop = canvas.height - gap - margin;
+      let minTop = margin;
+      let topHeight = Math.floor(Math.random() * (maxTop - minTop)) + minTop;
+
+      pipes.push({
+        x: canvas.width,
+        topHeight,
+        bottomY: topHeight + gap,
+        width: 50,
+        passed: false
+      });
+    }
+
+    function resetGame() {
+      if (animationId) cancelAnimationFrame(animationId);
+      backgroundX = 0;
+      bird = { x: 100, y: canvas.height / 2, width: 75, height: 55, velocity: 0, gravity: 0.5 };
+      pipes = [];
+      score = 0;
+      pipeCount = 0;
+      gameOver = false;
+      showCrashedBird = false;
+      crashFreeze = false;
+      gameOverScreen.style.display = "none";
+      updateGame();
+    }
+
+    function drawBackground() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function drawBird(x, y) {
+      const image = showCrashedBird ? crashBirdImage : birdImage;
+      ctx.drawImage(image, x, y, bird.width, bird.height);
+    }
+
+    function drawPipe(x, topHeight, bottomY, width) {
+      ctx.save();
+      ctx.translate(x + width / 2, topHeight / 2);
+      ctx.scale(1, -1);
+      ctx.drawImage(topPipeImage, -width / 2, -topHeight / 2, width, topHeight);
+      ctx.restore();
+      ctx.drawImage(bottomPipeImage, x, bottomY, width, canvas.height - bottomY);
+    }
+
+    function updateGame() {
+      if (!gameStarted) return;
+
+      drawBackground();
+
+      if (!gameOver && !crashFreeze) {
+        bird.velocity += bird.gravity;
+        bird.y += bird.velocity;
+      }
+
+      drawBird(bird.x, bird.y);
+
+      for (let i = 0; i < pipes.length; i++) {
+        let pipe = pipes[i];
+        if (!crashFreeze) pipe.x -= 3;
+        drawPipe(pipe.x, pipe.topHeight, pipe.bottomY, pipe.width);
+
+        if (!gameOver && !crashFreeze) {
+          const hit = checkCollision(pipe);
+          if (hit) {
+            showCrashedBird = true;
+            crashSound.currentTime = 0;
+            crashSound.play();
+            crashFreeze = true;
+            bird.velocity = 0;
+            setTimeout(() => {
+              gameOver = true;
+              finalScoreText.innerHTML = `🎯 Score: <b>${score}</b><br> 🦅 Pipes Crossed: <b>${pipeCount}</b>`;
+              gameOverScreen.style.display = "block";
+            }, 2000);
+          }
+
+          if (!pipe.passed && pipe.x + pipe.width < bird.x) {
+            score += 1;
+            pipeCount++;
+            pipe.passed = true;
+            popSound.currentTime = 0;
+            popSound.play();
+          }
+        }
+      }
+
+      ctx.font = "20px 'PressStart2P', monospace";
+      ctx.fillStyle = "#FFD700";
+      ctx.textAlign = "right";
+      ctx.fillText(`SCORE`, canvas.width - 20, 40);
+      ctx.font = "26px 'PressStart2P', monospace";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(`${score}`, canvas.width - 20, 75);
+
+      if (!gameOver || crashFreeze) {
+        animationId = requestAnimationFrame(updateGame);
+      }
+    }
+
+    function checkCollision(pipe) {
+      const inPipeRange = pipe.x < bird.x + bird.width && pipe.x + pipe.width > bird.x;
+      if (inPipeRange) {
+        if (bird.y < pipe.topHeight || bird.y + bird.height > pipe.bottomY) return true;
+      }
+      if (bird.y + bird.height > canvas.height || bird.y < 0) return true;
+      return false;
+    }
+
+    nameInput.addEventListener("input", () => {
+      continueButton.disabled = nameInput.value.trim() === "";
+    });
+
+    continueButton.addEventListener("click", () => {
+      if (nameInput.value.trim() !== "") {
+        playerName = nameInput.value.trim();
+        localStorage.setItem("playerName", playerName);
+        continueButton.style.display = "none";
+        nameInput.disabled = true;
+        nameInput.classList.add("disabled");
+
+        const message = document.createElement("p");
+        message.id = "pressAnyKeyMsg";
+        message.textContent = "PRESS ANY KEY TO CONTINUE...";
+        message.style.fontSize = "18px";
+        message.style.marginTop = "10px";
+        welcomeScreen.appendChild(message);
+        waitingToStart = true;
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    function drawBackgroundLoop() {
+      if (!gameStarted) {
+        drawBackground();
+        requestAnimationFrame(drawBackgroundLoop);
+      }
+    }
+
+    setInterval(spawnPipe, 1500);
+    drawBackgroundLoop();
+
+const video1 = document.getElementById("video1");
+const videoBetween = document.getElementById("videoBetween");
+const video2 = document.getElementById("video2");
+const videoEnd = document.getElementById("videoEnd");
+
+const videos = [video1, videoBetween, video2, videoEnd];
+let currentVideoIndex = 0;
+
+function playVideoSequence(index = 0) {
+  // Hide all videos and pause
+  videos.forEach(video => {
+    video.pause();
+    video.style.display = "none";
+  });
+
+  const currentVideo = videos[index];
+  currentVideo.currentTime = 0;
+  currentVideo.style.display = "block";
+  currentVideo.play();
+
+  if (index === 0 || index === 2) {
+    // Force next video after 10 seconds for video1 and video2
+    setTimeout(() => {
+      const nextIndex = (index + 1) % videos.length;
+      playVideoSequence(nextIndex);
+    }, 10000); // 10 seconds
+  } else {
+    // For transition videos, wait for video to end naturally
+    currentVideo.onended = () => {
+      const nextIndex = (index + 1) % videos.length;
+      playVideoSequence(nextIndex);
+    };
+  }
+;
+}
+
+// Start the background video loop
+playVideoSequence();
+
+  </script>
+</body>
+</html>
+
